@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="#">Campus Help Desk - Admin</a>
+      <div>
+        <button id="logoutBtn" class="btn btn-light">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <h3>Create Accounts</h3>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card mb-3 p-3">
+          <h5>Create Professor</h5>
+          <input id="profName" class="form-control mb-2" placeholder="Name">
+          <input id="profEmail" class="form-control mb-2" placeholder="Email">
+          <input id="profPassword" class="form-control mb-2" placeholder="Password">
+          <input id="profDept" class="form-control mb-2" placeholder="Department ID (optional)">
+          <button id="createProfBtn" class="btn btn-success">Create Professor</button>
+        </div>
+
+        <div class="card mb-3 p-3">
+          <h5>Create Student</h5>
+          <input id="stuId" class="form-control mb-2" placeholder="Student ID">
+          <input id="stuName" class="form-control mb-2" placeholder="Name">
+          <input id="stuEmail" class="form-control mb-2" placeholder="Email">
+          <input id="stuPhone" class="form-control mb-2" placeholder="Phone">
+          <input id="stuPassword" class="form-control mb-2" placeholder="Password">
+          <button id="createStuBtn" class="btn btn-success">Create Student</button>
+        </div>
+
+        <div class="card mb-3 p-3">
+          <h5>Create Department</h5>
+          <input id="deptName" class="form-control mb-2" placeholder="Department Name">
+          <input id="deptEmail" class="form-control mb-2" placeholder="Email">
+          <input id="deptPhone" class="form-control mb-2" placeholder="Phone">
+          <button id="createDeptBtn" class="btn btn-success">Create Department</button>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card p-3">
+          <h5>Admin Actions</h5>
+          <button id="listUsersBtn" class="btn btn-primary mb-2">List All Users</button>
+          <pre id="usersOutput" style="max-height:400px; overflow:auto;"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+  if (!token || (role !== 'admin' && role !== 'superadmin')) {
+    alert('Please login as admin');
+    location.href = 'views/login.html';
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', ()=>{ localStorage.clear(); location.href='views/login.html'; });
+
+  async function apiPost(path, body) {
+    const res = await fetch('/api/admin' + path, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  document.getElementById('createProfBtn').addEventListener('click', async ()=>{
+    const name = document.getElementById('profName').value;
+    const email = document.getElementById('profEmail').value;
+    const password = document.getElementById('profPassword').value;
+    const department_id = document.getElementById('profDept').value || null;
+    const r = await apiPost('/create-professor', { name, email, password, department_id });
+    alert(r.message || r.error || JSON.stringify(r));
+  });
+
+  document.getElementById('createStuBtn').addEventListener('click', async ()=>{
+    const student_id = document.getElementById('stuId').value;
+    const name = document.getElementById('stuName').value;
+    const email = document.getElementById('stuEmail').value;
+    const phone = document.getElementById('stuPhone').value;
+    const password = document.getElementById('stuPassword').value;
+    const r = await apiPost('/create-student', { student_id, name, email, phone, password });
+    alert(r.message || r.error || JSON.stringify(r));
+  });
+
+  document.getElementById('createDeptBtn').addEventListener('click', async ()=>{
+    const name = document.getElementById('deptName').value;
+    const email = document.getElementById('deptEmail').value;
+    const phone = document.getElementById('deptPhone').value;
+    const r = await apiPost('/create-department', { name, email, phone });
+    alert(r.message || r.error || JSON.stringify(r));
+  });
+
+  document.getElementById('listUsersBtn').addEventListener('click', async ()=>{
+    const res = await fetch('/api/admin/all-users', { headers: { 'Authorization': 'Bearer ' + token }});
+    const data = await res.json();
+    document.getElementById('usersOutput').textContent = JSON.stringify(data, null, 2);
+  });
+</script>
+</body>
+</html>

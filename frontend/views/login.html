@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Login Campus Help Desk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/styles.css">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h3 class="card-title mb-4">Login</h3>
+
+            <ul class="nav nav-tabs mb-3" id="roleTabs">
+              <li class="nav-item"><a class="nav-link active" data-role="student" href="#">Student</a></li>
+              <li class="nav-item"><a class="nav-link" data-role="professor" href="#">Professor</a></li>
+              <li class="nav-item"><a class="nav-link" data-role="admin" href="#">Admin</a></li>
+            </ul>
+
+            <form id="loginForm">
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input id="email" type="email" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input id="password" type="password" class="form-control" required>
+              </div>
+              <button class="btn btn-primary w-100" type="submit">Login</button>
+            </form>
+
+            <div class="mt-3 text-center">
+              <a href="#" id="registerLink">Register as Student</a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let role = 'student';
+  document.querySelectorAll('#roleTabs .nav-link').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      document.querySelectorAll('#roleTabs .nav-link').forEach(x=>x.classList.remove('active'));
+      a.classList.add('active');
+      role = a.dataset.role;
+    });
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const url = `/api/auth/${role}/login`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', role);
+      localStorage.setItem('userId', data.user.id || data.user.id);
+      if (role === 'student') location.href = 'student-dashboard.html';
+      else if (role === 'professor') location.href = 'professor-dashboard.html';
+      else location.href = 'admin-dashboard.html';
+    } else {
+      alert(data.message || 'Login failed');
+    }
+  });
+
+  document.getElementById('registerLink').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const name = prompt('Name');
+    const student_id = prompt('Student ID');
+    const email = prompt('Email');
+    const phone = prompt('Phone');
+    const password = prompt('Password');
+    if (!email) return;
+    fetch('/api/auth/student/register', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ student_id, name, email, phone, password })
+    }).then(r=>r.json()).then(d=>{
+      alert(d.message || 'Registered');
+    });
+  });
+</script>
+</body>
+</html>
